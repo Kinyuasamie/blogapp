@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="blogApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Accessibility Blog</title>
+    
+    <!-- CSS Dependencies -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.2.1/angular-material.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        /* Custom styles matching the design */
+        .blog-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+        }
+        
+        .blog-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .blog-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .blog-image-placeholder {
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            gap: 0.5rem;
+        }
+        
+        .pagination-btn {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+        
+        .pagination-btn.active {
+            background: #4299e1;
+            color: white;
+            border-color: #4299e1;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .search-header {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 0;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+        
+        @media (max-width: 768px) {
+            .blog-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .pagination-container {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+            
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body ng-controller="MainController as main" class="bg-gray-50">
+    
+    <!-- Header -->
+    <header class="header-section">
+        <div class="blog-container">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl md:text-3xl font-bold">The Blog</h1>
+                    <span class="text-sm opacity-75">Sharing knowledge & insights</span>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <div class="relative">
+                        <input 
+                            type="search"
+                            ng-model="main.searchQuery"
+                            ng-keypress="$event.keyCode === 13 && main.search()"
+                            placeholder="Search posts..."
+                            class="px-4 py-2 pl-10 rounded-full bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-75 focus:outline-none focus:bg-opacity-30 w-64"
+                            aria-label="Search blog posts">
+                        <i class="material-icons absolute left-3 top-2 text-white opacity-75">search</i>
+                    </div>
+                    <button 
+                        ng-click="main.search()"
+                        class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-full transition-all"
+                        aria-label="Search">
+                        <i class="material-icons">search</i>
+                    </button>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button 
+                    ng-click="main.toggleSidenav()" 
+                    class="md:hidden text-white"
+                    aria-label="Toggle navigation menu">
+                    <i class="material-icons">menu</i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Search -->
+    <div class="search-header md:hidden">
+        <div class="blog-container">
+            <div class="flex items-center space-x-2">
+                <input 
+                    type="search"
+                    ng-model="main.searchQuery"
+                    ng-keypress="$event.keyCode === 13 && main.search()"
+                    placeholder="Search posts..."
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    aria-label="Search blog posts">
+                <button 
+                    ng-click="main.search()"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    aria-label="Search">
+                    <i class="material-icons">search</i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="blog-container py-8" ng-view></main>
+
+    <!-- Side Navigation -->
+    <md-sidenav md-component-id="left" class="md-whiteframe-4dp">
+        <md-toolbar class="md-theme-indigo">
+            <h1 class="md-toolbar-tools">Navigation</h1>
+        </md-toolbar>
+        <md-content layout-padding>
+            <md-list>
+                <md-list-item ng-click="main.goHome()">
+                    <md-icon>home</md-icon>
+                    <p>Home</p>
+                </md-list-item>
+                <md-divider></md-divider>
+                <md-list-item ng-click="main.search()">
+                    <md-icon>search</md-icon>
+                    <p>Search</p>
+                </md-list-item>
+            </md-list>
+        </md-content>
+    </md-sidenav>
+
+    <!-- Blog List Template (included in ng-view) -->
+    <script type="text/ng-template" id="src/app/components/blog-list/blog-list.html">
+        <div class="min-h-screen">
+            
+            <!-- Page Title -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Latest Posts</h2>
+                <p class="text-gray-600" ng-if="vm.totalPosts > 0">
+                    Showing {{((vm.currentPage - 1) * vm.postsPerPage) + 1}}-{{Math.min(vm.currentPage * vm.postsPerPage, vm.totalPosts)}} 
+                    of {{vm.totalPosts}} posts
+                </p>
+                <div ng-if="vm.searchQuery" class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p class="text-blue-700">
+                        Search results for: <strong>"{{vm.searchQuery}}"</strong>
+                        <button ng-click="main.clearSearch()" class="ml-2 text-blue-500 hover:text-blue-700">
+                            <i class="material-icons text-sm">close</i>
+                        </button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div ng-if="vm.isLoading" class="loading-spinner">
+                <md-progress-circular md-mode="indeterminate"></md-progress-circular>
+            </div>
+
+            <!-- Error State -->
+            <div ng-if="vm.error" class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+                <div class="flex items-center">
+                    <i class="material-icons text-red-500 mr-3">error</i>
+                    <p class="text-red-700">{{vm.error}}</p>
+                </div>
+                <button ng-click="vm.loadPosts()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Try Again
+                </button>
+            </div>
+
+            <!-- Blog Posts Grid -->
+            <div ng-if="!vm.isLoading && vm.posts.length > 0" 
+                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 blog-grid mb-8">
+                
+                <article ng-repeat="post in vm.posts" 
+                        class="blog-card cursor-pointer"
+                        ng-click="vm.readPost(post.slug)"
+                        role="button"
+                        tabindex="0"
+                        ng-keypress="$event.keyCode === 13 && vm.readPost(post.slug)"
+                        aria-label="Read full post: {{post.title}}">
+                    
+                    <!-- Image Placeholder -->
+                    <div class="blog-image-placeholder">
+                        <i class="material-icons text-4xl">image</i>
+                    </div>
+                    
+                    <!-- Card Content -->
+                    <div class="p-6">
+                        <!-- Post Meta -->
+                        <div class="flex items-center justify-between mb-3 text-sm text-gray-500">
+                            <span>{{vm.formatDate(post.published_at)}}</span>
+                            <span ng-if="post.category" class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                {{post.category}}
+                            </span>
+                        </div>
+                        
+                        <!-- Title -->
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                            {{post.title}}
+                        </h3>
+                        
+                        <!-- Excerpt -->
+                        <p class="text-gray-600 mb-4 line-clamp-3">
+                            {{vm.truncateText(post.excerpt, 120)}}
+                        </p>
+                        
+                        <!-- Author & Read More -->
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-500">
+                                By {{post.author_name}}
+                            </span>
+                            <span class="text-blue-500 hover:text-blue-700 font-medium text-sm flex items-center">
+                                Read More
+                                <i class="material-icons ml-1 text-sm">arrow_forward</i>
+                            </span>
+                        </div>
+                        
+                        <!-- Tags -->
+                        <div ng-if="post.tags.length > 0" class="mt-3 flex flex-wrap gap-1">
+                            <span ng-repeat="tag in post.tags.slice(0, 3)" 
+                                  class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+                                {{tag}}
+                            </span>
+                            <span ng-if="post.tags.length > 3" class="text-gray-400 text-xs">
+                                +{{post.tags.length - 3}} more
+                            </span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Empty State -->
+            <div ng-if="!vm.isLoading && vm.posts.length === 0" class="text-center py-12">
+                <i class="material-icons text-6xl text-gray-300 mb-4">article</i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">
+                    <span ng-if="vm.searchQuery">No posts found</span>
+                    <span ng-if="!vm.searchQuery">No posts available</span>
+                </h3>
+                <p class="text-gray-500 mb-6">
+                    <span ng-if="vm.searchQuery">Try adjusting your search terms</span>
+                    <span ng-if="!vm.searchQuery">Check back later for new content</span>
+                </p>
+                <button ng-if="vm.searchQuery" 
+                        ng-click="main.clearSearch()" 
+                        class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                    Clear Search
+                </button>
+            </div>
+
+            <!-- Pagination -->
+            <nav ng-if="vm.totalPages > 1" class="pagination-container" aria-label="Blog post pagination">
+                
+                <!-- Previous Button -->
+                <button ng-click="vm.prevPage()" 
+                        ng-disabled="!vm.hasPrev"
+                        class="pagination-btn"
+                        aria-label="Previous page">
+                    <i class="material-icons">chevron_left</i>
+                </button>
+
+                <!-- First Page -->
+                <button ng-if="vm.getPageNumbers()[0] > 1"
+                        ng-click="vm.goToPage(1)"
+                        class="pagination-btn"
+                        aria-label="Go to page 1">
+                    1
+                </button>
+                
+                <!-- Ellipsis -->
+                <span ng-if="vm.getPageNumbers()[0] > 2" class="pagination-btn" style="border: none; cursor: default;">
+                    ...
+                </span>
+
+                <!-- Page Numbers -->
+                <button ng-repeat="page in vm.getPageNumbers()"
+                        ng-click="vm.goToPage(page)"
+                        ng-class="{'active': page === vm.currentPage}"
+                        class="pagination-btn"
+                        aria-label="Go to page {{page}}"
+                        aria-current="{{page === vm.currentPage ? 'page' : null}}">
+                    {{page}}
+                </button>
+
+                <!-- Ellipsis -->
+                <span ng-if="vm.getPageNumbers()[vm.getPageNumbers().length - 1] < vm.totalPages - 1" 
+                      class="pagination-btn" style="border: none; cursor: default;">
+                    ...
+                </span>
+
+                <!-- Last Page -->
+                <button ng-if="vm.getPageNumbers()[vm.getPageNumbers().length - 1] < vm.totalPages"
+                        ng-click="vm.goToPage(vm.totalPages)"
+                        class="pagination-btn"
+                        aria-label="Go to page {{vm.totalPages}}">
+                    {{vm.totalPages}}
+                </button>
+
+                <!-- Next Button -->
+                <button ng-click="vm.nextPage()" 
+                        ng-disabled="!vm.hasNext"
+                        class="pagination-btn"
+                        aria-label="Next page">
+                    <i class="material-icons">chevron_right</i>
+                </button>
+            </nav>
+
+            <!-- Page Info -->
+            <div ng-if="vm.totalPages > 1" class="text-center text-sm text-gray-500 mt-4">
+                Page {{vm.currentPage}} of {{vm.totalPages}}
+            </div>
+        </div>
+    </script>
+
+    <!-- JavaScript Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular-route.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular-sanitize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular-messages.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.2.1/angular-material.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="src/app/app.js"></script>
+    <script src="src/app/components/blog-list/blog-list.js"></script>
+    <script src="src/app/components/blog-post/blogpost.js"></script>
+    <script src="src/app/components/search/search.js"></script>
+</body>
+</html>
